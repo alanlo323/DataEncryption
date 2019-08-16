@@ -142,7 +142,7 @@ namespace DataEncryption.Encryption
         /// <remarks>
         /// Significantly less secure than using random binary keys.
         /// </remarks>
-        public static string SimpleDecryptWithPassword(string encryptedMessage, string password,
+        public static byte[] SimpleDecryptWithPassword(string encryptedMessage, string password,
                                                        int nonSecretPayloadLength = 0)
         {
             if (string.IsNullOrWhiteSpace(encryptedMessage))
@@ -150,7 +150,7 @@ namespace DataEncryption.Encryption
 
             var cipherText = Convert.FromBase64String(encryptedMessage);
             var plainText = SimpleDecryptWithPassword(cipherText, password, nonSecretPayloadLength);
-            return plainText == null ? null : Encoding.UTF8.GetString(plainText);
+            return plainText;
         }
 
         /// <summary>

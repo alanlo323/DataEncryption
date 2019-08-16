@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Drawing;
+using System.IO;
+using System.Text;
 using System.Windows.Forms;
 
 namespace DataEncryption
@@ -8,6 +11,20 @@ namespace DataEncryption
         public frmEncryption()
         {
             InitializeComponent();
+        }
+
+        public static bool IsValidImage(byte[] bytes)
+        {
+            try
+            {
+                using (MemoryStream ms = new MemoryStream(bytes))
+                    Image.FromStream(ms);
+            }
+            catch (ArgumentException)
+            {
+                return false;
+            }
+            return true;
         }
 
         private void btnEncrypt_Click(object sender, EventArgs e)
@@ -44,9 +61,21 @@ namespace DataEncryption
                 {
                     case 0:
                         result = Encryption.AESThenHMAC.SimpleDecryptWithPassword(rtbSource.Text, tbPassword.Text);
+                        if (result != null)
+                        {
+                            if (!IsValidImage((byte[])result))
+                            {
+                                result = Encoding.UTF8.GetString((byte[])result);
+                            } else
+                            {
+                                SaveFileDialog sfd = new SaveFileDialog();
+                                sfd.ShowDialog();
+                            }
+                        }
                         break;
                     case 1:
                         result = Encryption.AESGCM.SimpleDecryptWithPassword(rtbSource.Text, tbPassword.Text);
+                        result = (result == null) ? null : Encoding.UTF8.GetString((byte[])result);
                         break;
                     default:
                         MessageBox.Show("Please select an encryption algorithm!");
