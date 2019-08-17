@@ -38,6 +38,7 @@
             this.labPassword = new System.Windows.Forms.Label();
             this.pbPassword = new System.Windows.Forms.PictureBox();
             this.labDragDropHints = new System.Windows.Forms.Label();
+            this.btnSaveFile = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.pbPassword)).BeginInit();
             this.SuspendLayout();
             // 
@@ -130,15 +131,26 @@
             // labDragDropHints
             // 
             this.labDragDropHints.AllowDrop = true;
-            this.labDragDropHints.AutoSize = true;
             this.labDragDropHints.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.labDragDropHints.Font = new System.Drawing.Font("Calibri", 9.8F);
-            this.labDragDropHints.Location = new System.Drawing.Point(572, 261);
+            this.labDragDropHints.Location = new System.Drawing.Point(403, 270);
             this.labDragDropHints.Name = "labDragDropHints";
-            this.labDragDropHints.Size = new System.Drawing.Size(216, 19);
+            this.labDragDropHints.Size = new System.Drawing.Size(385, 27);
             this.labDragDropHints.TabIndex = 8;
             this.labDragDropHints.Text = "Drag the file here to import the path";
+            this.labDragDropHints.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.labDragDropHints.DragOver += new System.Windows.Forms.DragEventHandler(this.labDragDropHints_DragOver);
+            // 
+            // btnSaveFile
+            // 
+            this.btnSaveFile.Font = new System.Drawing.Font("Calibri", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnSaveFile.Location = new System.Drawing.Point(403, 241);
+            this.btnSaveFile.Name = "btnSaveFile";
+            this.btnSaveFile.Size = new System.Drawing.Size(385, 23);
+            this.btnSaveFile.TabIndex = 9;
+            this.btnSaveFile.Text = "Save To File";
+            this.btnSaveFile.UseVisualStyleBackColor = true;
+            this.btnSaveFile.Click += new System.EventHandler(this.BtnSaveFile_Click);
             // 
             // frmEncryption
             // 
@@ -146,6 +158,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 302);
+            this.Controls.Add(this.btnSaveFile);
             this.Controls.Add(this.labDragDropHints);
             this.Controls.Add(this.pbPassword);
             this.Controls.Add(this.labPassword);
@@ -176,6 +189,7 @@
         private System.Windows.Forms.Label labPassword;
         private System.Windows.Forms.PictureBox pbPassword;
         private System.Windows.Forms.Label labDragDropHints;
+        private System.Windows.Forms.Button btnSaveFile;
     }
 }
 
