@@ -43,6 +43,8 @@
             this.nudEncryptTimes = new System.Windows.Forms.NumericUpDown();
             this.label2 = new System.Windows.Forms.Label();
             this.cbAutoDecrypt = new System.Windows.Forms.CheckBox();
+            this.pbInfo = new System.Windows.Forms.ProgressBar();
+            this.labLayerDecrypted = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.pbPassword)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.nudEncryptTimes)).BeginInit();
             this.SuspendLayout();
@@ -111,6 +113,7 @@
             this.labEncryptionAlgorithm.Size = new System.Drawing.Size(128, 17);
             this.labEncryptionAlgorithm.TabIndex = 5;
             this.labEncryptionAlgorithm.Text = "EncryptionAlgorithm:";
+            this.labEncryptionAlgorithm.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // labPassword
             // 
@@ -121,6 +124,7 @@
             this.labPassword.Size = new System.Drawing.Size(65, 17);
             this.labPassword.TabIndex = 6;
             this.labPassword.Text = "Password:";
+            this.labPassword.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // pbPassword
             // 
@@ -199,7 +203,7 @@
             this.label2.Size = new System.Drawing.Size(99, 17);
             this.label2.TabIndex = 16;
             this.label2.Text = "Encrytion times:";
-            this.label2.TextAlign = System.Drawing.ContentAlignment.TopCenter;
+            this.label2.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // cbAutoDecrypt
             // 
@@ -210,7 +214,28 @@
             this.cbAutoDecrypt.Size = new System.Drawing.Size(141, 21);
             this.cbAutoDecrypt.TabIndex = 17;
             this.cbAutoDecrypt.Text = "Decrypt to last layer";
+            this.cbAutoDecrypt.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.cbAutoDecrypt.UseVisualStyleBackColor = true;
+            this.cbAutoDecrypt.CheckedChanged += new System.EventHandler(this.CbAutoDecrypt_CheckedChanged);
+            // 
+            // pbInfo
+            // 
+            this.pbInfo.Location = new System.Drawing.Point(403, 463);
+            this.pbInfo.Name = "pbInfo";
+            this.pbInfo.Size = new System.Drawing.Size(385, 23);
+            this.pbInfo.TabIndex = 18;
+            this.pbInfo.Visible = false;
+            // 
+            // labLayerDecrypted
+            // 
+            this.labLayerDecrypted.Font = new System.Drawing.Font("Calibri", 9.8F);
+            this.labLayerDecrypted.Location = new System.Drawing.Point(550, 439);
+            this.labLayerDecrypted.Name = "labLayerDecrypted";
+            this.labLayerDecrypted.Size = new System.Drawing.Size(238, 17);
+            this.labLayerDecrypted.TabIndex = 19;
+            this.labLayerDecrypted.Text = "Layer decrypted: ";
+            this.labLayerDecrypted.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.labLayerDecrypted.Visible = false;
             // 
             // frmEncryption
             // 
@@ -218,6 +243,8 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 522);
+            this.Controls.Add(this.labLayerDecrypted);
+            this.Controls.Add(this.pbInfo);
             this.Controls.Add(this.cbAutoDecrypt);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.nudEncryptTimes);
@@ -260,6 +287,8 @@
         private System.Windows.Forms.NumericUpDown nudEncryptTimes;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.CheckBox cbAutoDecrypt;
+        private System.Windows.Forms.ProgressBar pbInfo;
+        private System.Windows.Forms.Label labLayerDecrypted;
     }
 }
 
