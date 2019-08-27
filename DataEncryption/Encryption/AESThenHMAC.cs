@@ -1,11 +1,19 @@
-﻿using System;
+﻿/*
+ * This work (Modern Encryption of a String C#, by James Tuley), 
+ * identified by James Tuley, is free of known copyright restrictions.
+ * https://gist.github.com/4336842
+ * http://creativecommons.org/publicdomain/mark/1.0/ 
+ */
+
+using System;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 
 namespace DataEncryption.Encryption
 {
-    class AESThenHMAC
+
+    public static class AESThenHMAC
     {
         private static readonly RandomNumberGenerator Random = RandomNumberGenerator.Create();
 
@@ -16,7 +24,7 @@ namespace DataEncryption.Encryption
         //Preconfigured Password Key Derivation Parameters
         public static readonly int SaltBitSize = 64;
         public static readonly int Iterations = 10000;
-        public static readonly int MinPasswordLength = 4;
+        public static readonly int MinPasswordLength = 12;
 
         /// <summary>
         /// Helper that generates a random key on each call.
@@ -97,33 +105,7 @@ namespace DataEncryption.Encryption
             if (string.IsNullOrEmpty(secretMessage))
                 throw new ArgumentException("Secret Message Required!", "secretMessage");
 
-            byte[] plainText;
-            try
-            {
-                using (FileStream fs = File.Open(Path.GetFullPath(secretMessage), FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                using (BufferedStream bs = new BufferedStream(fs))
-                using (StreamReader sr = new StreamReader(bs))
-                {
-                    using (var memstream = new MemoryStream())
-                    {
-                        var buffer = new byte[512];
-                        var bytesRead = default(int);
-                        while ((bytesRead = sr.BaseStream.Read(buffer, 0, buffer.Length)) > 0)
-                        {
-                            memstream.Write(buffer, 0, bytesRead);
-                        }
-                        plainText = memstream.ToArray();
-                    }
-                }
-
-            }
-            catch (Exception)
-            {
-                //Exception means this isn't a valid path.
-                plainText = Encoding.UTF8.GetBytes(secretMessage);
-                //throw;
-            }
-
+            var plainText = Encoding.UTF8.GetBytes(secretMessage);
             var cipherText = SimpleEncryptWithPassword(plainText, password, nonSecretPayload);
             return Convert.ToBase64String(cipherText);
         }
@@ -142,7 +124,7 @@ namespace DataEncryption.Encryption
         /// <remarks>
         /// Significantly less secure than using random binary keys.
         /// </remarks>
-        public static byte[] SimpleDecryptWithPassword(string encryptedMessage, string password,
+        public static string SimpleDecryptWithPassword(string encryptedMessage, string password,
                                                        int nonSecretPayloadLength = 0)
         {
             if (string.IsNullOrWhiteSpace(encryptedMessage))
@@ -150,7 +132,7 @@ namespace DataEncryption.Encryption
 
             var cipherText = Convert.FromBase64String(encryptedMessage);
             var plainText = SimpleDecryptWithPassword(cipherText, password, nonSecretPayloadLength);
-            return plainText;
+            return plainText == null ? null : Encoding.UTF8.GetString(plainText);
         }
 
         /// <summary>
@@ -421,5 +403,6 @@ namespace DataEncryption.Encryption
 
             return SimpleDecrypt(encryptedMessage, cryptKey, authKey, cryptSalt.Length + authSalt.Length + nonSecretPayloadLength);
         }
+
     }
 }
