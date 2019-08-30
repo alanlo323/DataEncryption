@@ -43,8 +43,10 @@
             this.nudEncryptTimes = new System.Windows.Forms.NumericUpDown();
             this.label2 = new System.Windows.Forms.Label();
             this.cbAutoDecrypt = new System.Windows.Forms.CheckBox();
-            this.pbInfo = new System.Windows.Forms.ProgressBar();
+            this.pbInfoTotal = new System.Windows.Forms.ProgressBar();
             this.labLayerDecrypted = new System.Windows.Forms.Label();
+            this.pbInfoSession = new System.Windows.Forms.ProgressBar();
+            this.btnStop = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.pbPassword)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.nudEncryptTimes)).BeginInit();
             this.SuspendLayout();
@@ -150,12 +152,14 @@
             this.labDragDropHints.Tag = "";
             this.labDragDropHints.Text = "Drag file here to import";
             this.labDragDropHints.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.labDragDropHints.DragDrop += new System.Windows.Forms.DragEventHandler(this.labDragDropHints_DragDrop);
+            this.labDragDropHints.DragEnter += new System.Windows.Forms.DragEventHandler(this.labDragDropHints_DragEnter);
             this.labDragDropHints.DragOver += new System.Windows.Forms.DragEventHandler(this.labDragDropHints_DragOver);
             // 
             // btnReset
             // 
             this.btnReset.Font = new System.Drawing.Font("Calibri", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnReset.Location = new System.Drawing.Point(403, 493);
+            this.btnReset.Location = new System.Drawing.Point(403, 492);
             this.btnReset.Name = "btnReset";
             this.btnReset.Size = new System.Drawing.Size(385, 23);
             this.btnReset.TabIndex = 10;
@@ -179,6 +183,11 @@
             // 
             this.nudEncryptTimes.Font = new System.Drawing.Font("Calibri", 9.8F);
             this.nudEncryptTimes.Location = new System.Drawing.Point(146, 437);
+            this.nudEncryptTimes.Maximum = new decimal(new int[] {
+            1000,
+            0,
+            0,
+            0});
             this.nudEncryptTimes.Minimum = new decimal(new int[] {
             1,
             0,
@@ -218,13 +227,13 @@
             this.cbAutoDecrypt.UseVisualStyleBackColor = true;
             this.cbAutoDecrypt.CheckedChanged += new System.EventHandler(this.CbAutoDecrypt_CheckedChanged);
             // 
-            // pbInfo
+            // pbInfoTotal
             // 
-            this.pbInfo.Location = new System.Drawing.Point(403, 463);
-            this.pbInfo.Name = "pbInfo";
-            this.pbInfo.Size = new System.Drawing.Size(385, 23);
-            this.pbInfo.TabIndex = 18;
-            this.pbInfo.Visible = false;
+            this.pbInfoTotal.Enabled = false;
+            this.pbInfoTotal.Location = new System.Drawing.Point(12, 521);
+            this.pbInfoTotal.Name = "pbInfoTotal";
+            this.pbInfoTotal.Size = new System.Drawing.Size(776, 23);
+            this.pbInfoTotal.TabIndex = 18;
             // 
             // labLayerDecrypted
             // 
@@ -237,14 +246,36 @@
             this.labLayerDecrypted.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.labLayerDecrypted.Visible = false;
             // 
+            // pbInfoSession
+            // 
+            this.pbInfoSession.Enabled = false;
+            this.pbInfoSession.Location = new System.Drawing.Point(12, 550);
+            this.pbInfoSession.Name = "pbInfoSession";
+            this.pbInfoSession.Size = new System.Drawing.Size(776, 23);
+            this.pbInfoSession.TabIndex = 20;
+            // 
+            // btnStop
+            // 
+            this.btnStop.Enabled = false;
+            this.btnStop.Font = new System.Drawing.Font("Calibri", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnStop.Location = new System.Drawing.Point(403, 463);
+            this.btnStop.Name = "btnStop";
+            this.btnStop.Size = new System.Drawing.Size(385, 23);
+            this.btnStop.TabIndex = 21;
+            this.btnStop.Text = "Stop";
+            this.btnStop.UseVisualStyleBackColor = true;
+            this.btnStop.Click += new System.EventHandler(this.btStop_Click);
+            // 
             // frmEncryption
             // 
             this.AllowDrop = true;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(800, 522);
+            this.ClientSize = new System.Drawing.Size(800, 580);
+            this.Controls.Add(this.btnStop);
+            this.Controls.Add(this.pbInfoSession);
             this.Controls.Add(this.labLayerDecrypted);
-            this.Controls.Add(this.pbInfo);
+            this.Controls.Add(this.pbInfoTotal);
             this.Controls.Add(this.cbAutoDecrypt);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.nudEncryptTimes);
@@ -287,8 +318,10 @@
         private System.Windows.Forms.NumericUpDown nudEncryptTimes;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.CheckBox cbAutoDecrypt;
-        private System.Windows.Forms.ProgressBar pbInfo;
+        private System.Windows.Forms.ProgressBar pbInfoTotal;
         private System.Windows.Forms.Label labLayerDecrypted;
+        private System.Windows.Forms.ProgressBar pbInfoSession;
+        private System.Windows.Forms.Button btnStop;
     }
 }
 

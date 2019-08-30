@@ -1,10 +1,11 @@
 ﻿using System;
+using System.Collections;
 using System.ComponentModel;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net.NetworkInformation;
 using System.Text;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace DataEncryption
@@ -15,14 +16,15 @@ namespace DataEncryption
         readonly string labLayerDecryptedString = "Layer decrypted: ";
         readonly string FileSavedMarker = "*fileSavedMarker--@$";
 
-        string importPath;
+        string[] importPath;
         string firstMacAddress = NetworkInterface
             .GetAllNetworkInterfaces()
             .Where(nic => nic.OperationalStatus == OperationalStatus.Up && nic.NetworkInterfaceType != NetworkInterfaceType.Loopback)
             .Select(nic => nic.GetPhysicalAddress().ToString())
             .FirstOrDefault();
-        BackgroundWorker bw;
         string finalResult;
+        ArrayList importFiles = new ArrayList();
+        BackgroundWorker bw;
         WorkerType workerType;
 
         string _rtbSourceText;
@@ -31,11 +33,20 @@ namespace DataEncryption
         bool _cbAutoDecryptChecked;
         bool _cbRandomAlgorithmChecked;
         int _cbEncryptionAlgorithmSelectedIndex;
+        int _nudEncryptTimesValue;
 
         enum WorkerType
         {
+            CountingFiles,
             Encryption,
             Decryption
+        }
+
+        class ReportStates
+        {
+            public WorkerType workerType { get; set; }
+            public int total { get; set; }
+            public int current { get; set; }
         }
 
         public frmEncryption()
@@ -59,19 +70,6 @@ namespace DataEncryption
             bw.RunWorkerCompleted += new RunWorkerCompletedEventHandler(bw_RunWorkerCompleted);
         }
 
-        public static bool IsValidImage(byte[] bytes)
-        {
-            try
-            {
-                using (MemoryStream ms = new MemoryStream(bytes))
-                    Image.FromStream(ms);
-            }
-            catch (ArgumentException)
-            {
-                return false;
-            }
-            return true;
-        }
         public bool ByteArrayToFile(string fileName, byte[] byteArray)
         {
             try
@@ -84,7 +82,6 @@ namespace DataEncryption
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
                 return false;
             }
         }
@@ -93,15 +90,25 @@ namespace DataEncryption
         {
             if (bw.IsBusy != true)
             {
+                rtbSource.Enabled = false;
+                tbPassword.Enabled = false;
+                nudEncryptTimes.Enabled = false;
+                cbAutoDecrypt.Enabled = false;
+                cbRandomAlgorithm.Enabled = false;
+                labDragDropHints.AllowDrop = false;
                 _cbRandomAlgorithmChecked = cbRandomAlgorithm.Checked;
                 _cbEncryptionAlgorithmSelectedIndex = cbEncryptionAlgorithm.SelectedIndex;
                 _rtbSourceText = rtbSource.Text;
                 _tbPasswordText = tbPassword.Text;
+                _nudEncryptTimesValue = (int)nudEncryptTimes.Value;
                 workerType = WorkerType.Encryption;
-                pbInfo.Maximum = (int)nudEncryptTimes.Value;
-                pbInfo.Value = 0;
-                pbInfo.Visible = true;
+                pbInfoTotal.Maximum = (int)nudEncryptTimes.Value;
+                pbInfoTotal.Value = 0;
+                pbInfoTotal.Enabled = true;
+                pbInfoSession.Value = 0;
+                pbInfoSession.Enabled = true;
                 labLayerDecrypted.Visible = false;
+                btnStop.Enabled = true;
                 bw.RunWorkerAsync();
             }
         }
@@ -110,17 +117,59 @@ namespace DataEncryption
         {
             if (bw.IsBusy != true)
             {
+                rtbSource.Enabled = false;
+                tbPassword.Enabled = false;
+                nudEncryptTimes.Enabled = false;
+                cbAutoDecrypt.Enabled = false;
+                cbRandomAlgorithm.Enabled = false;
+                labDragDropHints.AllowDrop = false;
                 _cbRandomAlgorithmChecked = cbRandomAlgorithm.Checked;
                 _cbEncryptionAlgorithmSelectedIndex = cbEncryptionAlgorithm.SelectedIndex;
                 _rtbSourceText = rtbSource.Text;
                 _tbPasswordText = tbPassword.Text;
                 _cbAutoDecryptChecked_temp = _cbAutoDecryptChecked = cbAutoDecrypt.Checked;
+                _nudEncryptTimesValue = 1;
                 workerType = WorkerType.Decryption;
-                pbInfo.Value = 0;
-                pbInfo.Visible = false;
+                pbInfoTotal.Value = 0;
+                pbInfoTotal.Enabled = true;
+                pbInfoSession.Value = 0;
+                pbInfoSession.Enabled = false;
                 labLayerDecrypted.Text = labLayerDecryptedString + 0;
                 labLayerDecrypted.Visible = true;
+                btnStop.Enabled = true;
                 bw.RunWorkerAsync();
+            }
+        }
+
+        private void btStop_Click(object sender, EventArgs e)
+        {
+            if (bw.IsBusy)
+            {
+                bw.CancelAsync();
+            }
+        }
+
+        private void btnReset_Click(object sender, EventArgs e)
+        {
+            importPath = null;
+            rtbSource.Text = "";
+            cbAutoDecrypt.Checked = false;
+            cbRandomAlgorithm.Checked = false;
+            labDragDropHints.Text = labDragDropHintsString;
+            cbEncryptionAlgorithm.SelectedItem = null;
+            cbEncryptionAlgorithm.Text = "--select--";
+            nudEncryptTimes.Value = 1;
+            tbPassword.Text = firstMacAddress;
+            pbInfoTotal.Value = 0;
+            pbInfoTotal.Enabled = false;
+            pbInfoSession.Value = 0;
+            pbInfoSession.Enabled = false;
+            labLayerDecrypted.Visible = false;
+            labLayerDecrypted.Text = labLayerDecryptedString;
+            btnStop.Enabled = false;
+            if (bw != null || bw.IsBusy)
+            {
+                bw.CancelAsync();
             }
         }
 
@@ -136,31 +185,33 @@ namespace DataEncryption
 
         private void labDragDropHints_DragOver(object sender, DragEventArgs e)
         {
-            rtbSource.Text = null;
-            string[] fileList = (string[])e.Data.GetData(DataFormats.FileDrop, false);
-            importPath = fileList[0];
-            labDragDropHints.Text = labDragDropHintsString + "\n" + importPath;
         }
 
-        private void btnReset_Click(object sender, EventArgs e)
+        private void labDragDropHints_DragDrop(object sender, DragEventArgs e)
         {
-            importPath = null;
-            rtbSource.Text = "";
-            cbAutoDecrypt.Checked = false;
-            cbRandomAlgorithm.Checked = false;
-            labDragDropHints.Text = labDragDropHintsString;
-            cbEncryptionAlgorithm.SelectedItem = null;
-            cbEncryptionAlgorithm.Text = "--select--";
-            nudEncryptTimes.Value = 1;
-            tbPassword.Text = firstMacAddress;
-            pbInfo.Value = 0;
-            pbInfo.Visible = false;
-            labLayerDecrypted.Visible = false;
-            labLayerDecrypted.Text = labLayerDecryptedString;
-            if (bw != null || bw.IsBusy)
+            rtbSource.Text = null;
+            importFiles.Clear();
+            importPath = (string[])e.Data.GetData(DataFormats.FileDrop);
+            if (importPath == null)
             {
-                bw.CancelAsync();
+                e.Effect = DragDropEffects.None;
+                return;
             }
+            updateDrapInfoToLabel();
+        }
+
+        private void updateDrapInfoToLabel()
+        {
+            labDragDropHints.Text = labDragDropHintsString;
+            for (int i = 0; i < importPath.Length; i++)
+            {
+                labDragDropHints.Text += "\n" + importPath[i];
+            }
+        }
+
+        private void labDragDropHints_DragEnter(object sender, DragEventArgs e)
+        {
+            e.Effect = DragDropEffects.Link;
         }
 
         private void rtbSource_TextChanged(object sender, EventArgs e)
@@ -186,17 +237,17 @@ namespace DataEncryption
             }
         }
 
-        private string Encrypt()
+        private string Encrypt(string filePath)
         {
             try
             {
                 bool isBytesData = false;
                 byte[] secretMessage = null;
-                if (importPath != null)
+                if (filePath != null)
                 {
                     try
                     {
-                        using (FileStream fs = File.Open(Path.GetFullPath(importPath), FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                        using (FileStream fs = File.Open(Path.GetFullPath(filePath), FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                         using (BufferedStream bs = new BufferedStream(fs))
                         using (StreamReader sr = new StreamReader(bs))
                         {
@@ -235,7 +286,7 @@ namespace DataEncryption
                 }
                 if (isBytesData)
                 {
-                    ByteArrayToFile(importPath, result);
+                    ByteArrayToFile(filePath, result);
                     return null;
                 }
                 else
@@ -249,17 +300,17 @@ namespace DataEncryption
             }
         }
 
-        private string Decrypt()
+        private string Decrypt(string filePath)
         {
             try
             {
                 bool isBytesData = false;
                 byte[] secretMessage = null;
-                if (importPath != null)
+                if (filePath != null)
                 {
                     try
                     {
-                        using (FileStream fs = File.Open(Path.GetFullPath(importPath), FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                        using (FileStream fs = File.Open(Path.GetFullPath(filePath), FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                         using (BufferedStream bs = new BufferedStream(fs))
                         using (StreamReader sr = new StreamReader(bs))
                         {
@@ -327,7 +378,7 @@ namespace DataEncryption
                     {
                         if (isBytesData)
                         {
-                            ByteArrayToFile(importPath, result);
+                            ByteArrayToFile(filePath, result);
                             return FileSavedMarker;
                         }
                         else
@@ -345,7 +396,7 @@ namespace DataEncryption
                 {
                     if (isBytesData)
                     {
-                        ByteArrayToFile(importPath, result);
+                        ByteArrayToFile(filePath, result);
                         return FileSavedMarker;
                     }
                     else
@@ -359,55 +410,118 @@ namespace DataEncryption
                 throw ex;
             }
         }
+
+        private void HandleData(string[] path, DoWorkEventArgs e)
+        {
+            for (int i = 0; i < path.Length; i++)
+            {
+                if ((bw.CancellationPending == true))
+                {
+                    e.Cancel = true;
+                    break;
+                }
+                Thread.Sleep(20);
+                string filePath = path[i];
+                FileAttributes attr = File.GetAttributes(filePath);
+                if (attr.HasFlag(FileAttributes.Directory))
+                {
+                    DirectoryInfo d = new DirectoryInfo(filePath);
+                    FileInfo[] Files = d.GetFiles();
+                    for (int j = 0; j < Files.Length; j++)
+                    {
+                        HandleData(new string[] { Files[j].FullName }, e);
+                    }
+                    DirectoryInfo[] directories = d.GetDirectories();
+                    for (int j = 0; j < directories.Length; j++)
+                    {
+                        HandleData(new string[] { directories[j].FullName }, e);
+                    }
+                }
+                else
+                {
+                    if (workerType == WorkerType.Encryption)
+                    {
+                        finalResult = "";
+                        for (int j = 0; j < _nudEncryptTimesValue; j++)
+                        {
+                            if ((bw.CancellationPending == true))
+                            {
+                                e.Cancel = true;
+                                break;
+                            }
+                            bw.ReportProgress(0, new ReportStates
+                            {
+                                workerType = WorkerType.Encryption,
+                                total = _nudEncryptTimesValue,
+                                current = j
+                            });
+                            finalResult = Encrypt(filePath);
+                            _rtbSourceText = finalResult;
+                            bw.ReportProgress(1, new ReportStates
+                            {
+                                workerType = WorkerType.Encryption,
+                                total = _nudEncryptTimesValue,
+                                current = j + 1
+                            });
+                        }
+                    }
+                    else if (workerType == WorkerType.Decryption)
+                    {
+                        finalResult = "";
+                        do
+                        {
+                            try
+                            {
+                                if ((bw.CancellationPending == true))
+                                {
+                                    e.Cancel = true;
+                                    break;
+                                }
+                                bw.ReportProgress(0, new ReportStates { workerType = WorkerType.Decryption });
+                                finalResult = Decrypt(filePath);
+                                _rtbSourceText = finalResult;
+                                if (finalResult != null || finalResult == FileSavedMarker)
+                                {
+                                    bw.ReportProgress(1, new ReportStates { workerType = WorkerType.Decryption });
+                                }
+                            }
+                            catch (FormatException)
+                            {
+                                return;
+                            }
+                            catch (Exception ex)
+                            {
+                                throw ex;
+                            }
+                        } while (_cbAutoDecryptChecked);
+                    }
+                }
+            }
+        }
+
         //背景執行
         private void bw_DoWork(object sender, DoWorkEventArgs e)
         {
             try
             {
-                if (workerType == WorkerType.Encryption)
+                //Count files
+                int filesCount = 0;
+                for (int i = 0; i < importPath.Length; i++)
                 {
-                    finalResult = "";
-                    for (int i = 0; i < nudEncryptTimes.Value; i++)
+                    string filePath = importPath[i];
+                    FileAttributes attr = File.GetAttributes(filePath);
+                    if (attr.HasFlag(FileAttributes.Directory))
                     {
-                        if ((bw.CancellationPending == true))
-                        {
-                            e.Cancel = true;
-                            break;
-                        }
-                        else
-                        {
-                            finalResult = Encrypt();
-                            _rtbSourceText = finalResult;
-                            bw.ReportProgress(i + 1);
-                        }
+                        filesCount += Directory.GetFiles(filePath, "*.*", SearchOption.AllDirectories).Length;
                     }
-                }
-                else if (workerType == WorkerType.Decryption)
-                {
-                    finalResult = "";
-                    int i = 0;
-                    do
+                    else
                     {
-                        try
-                        {
-                            finalResult = Decrypt();
-                            _rtbSourceText = finalResult;
-                            if (finalResult != null || finalResult == FileSavedMarker)
-                            {
-                                bw.ReportProgress(++i);
-                            }
-                        }
-                        catch (FormatException)
-                        {
-                            return;
-                        }
-                        catch (Exception ex)
-                        {
-                            MessageBox.Show(ex.Message);
-                            return;
-                        }
-                    } while (_cbAutoDecryptChecked);
+                        filesCount++;
+                    }
+                    bw.ReportProgress(filesCount, new ReportStates { workerType = WorkerType.CountingFiles });
                 }
+                // Encrypt or decrypt the files
+                HandleData(importPath, e);
             }
             catch (Exception ex)
             {
@@ -418,14 +532,28 @@ namespace DataEncryption
         }
         private void bw_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
+            ReportStates reportStates = (ReportStates)e.UserState;
+            WorkerType workerType = reportStates.workerType;
             int progressPercentage = e.ProgressPercentage;
-            if (workerType == WorkerType.Encryption)
+            switch (workerType)
             {
-                pbInfo.Value = progressPercentage;
-            }
-            else if (workerType == WorkerType.Decryption)
-            {
-                labLayerDecrypted.Text = labLayerDecryptedString + progressPercentage;
+                case WorkerType.CountingFiles:
+                    pbInfoSession.Maximum = _nudEncryptTimesValue;
+                    pbInfoTotal.Maximum = progressPercentage * _nudEncryptTimesValue;
+                    labDragDropHints.Text = "Counting files: " + progressPercentage + " files found.";
+                    break;
+                case WorkerType.Encryption:
+                    pbInfoSession.Maximum = reportStates.total;
+                    pbInfoSession.Value = reportStates.current;
+                    pbInfoTotal.Value += progressPercentage;
+                    labDragDropHints.Text = pbInfoTotal.Value + " files Encrypted...";
+                    break;
+                case WorkerType.Decryption:
+                    pbInfoTotal.Value += progressPercentage;
+                    labLayerDecrypted.Text = labLayerDecryptedString + pbInfoTotal.Value;
+                    break;
+                default:
+                    break;
             }
         }
 
@@ -445,13 +573,21 @@ namespace DataEncryption
             {
                 if (finalResult != FileSavedMarker)
                 {
-                    rtbSource.Text = finalResult;
+                    //rtbSource.Text = finalResult;
                 }
             }
             if (workerType == WorkerType.Decryption)
             {
                 cbAutoDecrypt.Checked = _cbAutoDecryptChecked_temp;
             }
+            updateDrapInfoToLabel();
+            labDragDropHints.AllowDrop = true;
+            rtbSource.Enabled = true;
+            tbPassword.Enabled = true;
+            nudEncryptTimes.Enabled = true;
+            cbAutoDecrypt.Enabled = true;
+            cbRandomAlgorithm.Enabled = true;
+            btnStop.Enabled = false;
         }
     }
 }
