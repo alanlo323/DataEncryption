@@ -47,6 +47,7 @@
             this.labLayerDecrypted = new System.Windows.Forms.Label();
             this.pbInfoSession = new System.Windows.Forms.ProgressBar();
             this.btnStop = new System.Windows.Forms.Button();
+            this.btnAscii = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.pbPassword)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.nudEncryptTimes)).BeginInit();
             this.SuspendLayout();
@@ -266,12 +267,23 @@
             this.btnStop.UseVisualStyleBackColor = true;
             this.btnStop.Click += new System.EventHandler(this.btStop_Click);
             // 
+            // btnAscii
+            // 
+            this.btnAscii.Location = new System.Drawing.Point(247, 437);
+            this.btnAscii.Name = "btnAscii";
+            this.btnAscii.Size = new System.Drawing.Size(150, 23);
+            this.btnAscii.TabIndex = 22;
+            this.btnAscii.Text = "ASCII";
+            this.btnAscii.UseVisualStyleBackColor = true;
+            this.btnAscii.Click += new System.EventHandler(this.btnAscii_Click);
+            // 
             // frmEncryption
             // 
             this.AllowDrop = true;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 580);
+            this.Controls.Add(this.btnAscii);
             this.Controls.Add(this.btnStop);
             this.Controls.Add(this.pbInfoSession);
             this.Controls.Add(this.labLayerDecrypted);
@@ -322,6 +334,7 @@
         private System.Windows.Forms.Label labLayerDecrypted;
         private System.Windows.Forms.ProgressBar pbInfoSession;
         private System.Windows.Forms.Button btnStop;
+        private System.Windows.Forms.Button btnAscii;
     }
 }
 

@@ -39,7 +39,8 @@ namespace DataEncryption
         {
             CountingFiles,
             Encryption,
-            Decryption
+            Decryption,
+            ASCII
         }
 
         class ReportStates
@@ -80,7 +81,7 @@ namespace DataEncryption
                     return true;
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return false;
             }
@@ -90,6 +91,7 @@ namespace DataEncryption
         {
             if (bw.IsBusy != true)
             {
+                workerType = WorkerType.Encryption;
                 rtbSource.Enabled = false;
                 tbPassword.Enabled = false;
                 nudEncryptTimes.Enabled = false;
@@ -101,7 +103,6 @@ namespace DataEncryption
                 _rtbSourceText = rtbSource.Text;
                 _tbPasswordText = tbPassword.Text;
                 _nudEncryptTimesValue = (int)nudEncryptTimes.Value;
-                workerType = WorkerType.Encryption;
                 pbInfoTotal.Maximum = (int)nudEncryptTimes.Value;
                 pbInfoTotal.Value = 0;
                 pbInfoTotal.Enabled = true;
@@ -117,6 +118,7 @@ namespace DataEncryption
         {
             if (bw.IsBusy != true)
             {
+                workerType = WorkerType.Decryption;
                 rtbSource.Enabled = false;
                 tbPassword.Enabled = false;
                 nudEncryptTimes.Enabled = false;
@@ -129,13 +131,40 @@ namespace DataEncryption
                 _tbPasswordText = tbPassword.Text;
                 _cbAutoDecryptChecked_temp = _cbAutoDecryptChecked = cbAutoDecrypt.Checked;
                 _nudEncryptTimesValue = 1;
-                workerType = WorkerType.Decryption;
                 pbInfoTotal.Value = 0;
                 pbInfoTotal.Enabled = true;
                 pbInfoSession.Value = 0;
                 pbInfoSession.Enabled = false;
                 labLayerDecrypted.Text = labLayerDecryptedString + 0;
                 labLayerDecrypted.Visible = true;
+                btnStop.Enabled = true;
+                bw.RunWorkerAsync();
+            }
+        }
+
+        private void btnAscii_Click(object sender, EventArgs e)
+        {
+
+            if (bw.IsBusy != true)
+            {
+                workerType = WorkerType.ASCII;
+                rtbSource.Enabled = false;
+                tbPassword.Enabled = false;
+                nudEncryptTimes.Enabled = false;
+                cbAutoDecrypt.Enabled = false;
+                cbRandomAlgorithm.Enabled = false;
+                labDragDropHints.AllowDrop = false;
+                _cbRandomAlgorithmChecked = cbRandomAlgorithm.Checked;
+                _cbEncryptionAlgorithmSelectedIndex = cbEncryptionAlgorithm.SelectedIndex;
+                _rtbSourceText = rtbSource.Text;
+                _tbPasswordText = tbPassword.Text;
+                _nudEncryptTimesValue = (int)nudEncryptTimes.Value;
+                pbInfoTotal.Maximum = (int)nudEncryptTimes.Value;
+                pbInfoTotal.Value = 0;
+                pbInfoTotal.Enabled = true;
+                pbInfoSession.Value = 0;
+                pbInfoSession.Enabled = true;
+                labLayerDecrypted.Visible = false;
                 btnStop.Enabled = true;
                 bw.RunWorkerAsync();
             }
@@ -203,9 +232,12 @@ namespace DataEncryption
         private void updateDrapInfoToLabel()
         {
             labDragDropHints.Text = labDragDropHintsString;
-            for (int i = 0; i < importPath.Length; i++)
+            if (importPath != null)
             {
-                labDragDropHints.Text += "\n" + importPath[i];
+                for (int i = 0; i < importPath.Length; i++)
+                {
+                    labDragDropHints.Text += "\n" + importPath[i];
+                }
             }
         }
 
@@ -247,6 +279,10 @@ namespace DataEncryption
                 {
                     try
                     {
+                        if (filePath.Length > 260)
+                        {
+
+                        }
                         using (FileStream fs = File.Open(Path.GetFullPath(filePath), FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                         using (BufferedStream bs = new BufferedStream(fs))
                         using (StreamReader sr = new StreamReader(bs))
@@ -422,8 +458,18 @@ namespace DataEncryption
                 }
                 Thread.Sleep(20);
                 string filePath = path[i];
-                FileAttributes attr = File.GetAttributes(filePath);
-                if (attr.HasFlag(FileAttributes.Directory))
+                bool isDirectory = false;
+                try
+                {
+                    FileAttributes attr = File.GetAttributes(filePath);
+                    if (attr.HasFlag(FileAttributes.Directory))
+                    {
+                        isDirectory = true;
+                    }
+                }
+                catch (Exception) { }
+
+                if (isDirectory)
                 {
                     DirectoryInfo d = new DirectoryInfo(filePath);
                     FileInfo[] Files = d.GetFiles();
@@ -502,26 +548,104 @@ namespace DataEncryption
         //背景執行
         private void bw_DoWork(object sender, DoWorkEventArgs e)
         {
+            if (workerType == WorkerType.ASCII)
+            {
+                string source = _rtbSourceText;
+                string se = "";
+                string sd = "";
+                int j;
+                Random random = new Random(-1);
+                _nudEncryptTimesValue = 2;
+                bw.ReportProgress(source.Length, new ReportStates { workerType = WorkerType.CountingFiles });
+
+                int v = char.MaxValue;
+
+                j = 0;
+                foreach (char c in source)
+                {
+                    if (new Random().NextDouble() > 0.5)
+                    {
+                        Thread.Sleep(1);
+                    }
+                    if ((bw.CancellationPending == true))
+                    {
+                        e.Cancel = true;
+                        break;
+                    }
+                    int x = Convert.ToInt32(c);
+                    int n = (int)Math.Floor(random.NextDouble() * 100 * v);
+                    int i = (x + n) % v;
+                    se += Convert.ToChar(i);
+                    bw.ReportProgress(1, new ReportStates
+                    {
+                        workerType = WorkerType.ASCII,
+                        total = source.Length,
+                        current = ++j
+                    });
+                }
+                random = new Random(-1);
+                j = 0;
+                foreach (char c in se)
+                {
+                    if (new Random().NextDouble() > 0.5)
+                    {
+                        Thread.Sleep(1);
+                    }
+                    if ((bw.CancellationPending == true))
+                    {
+                        e.Cancel = true;
+                        break;
+                    }
+                    int x = Convert.ToInt32(c);
+                    int n = (int)Math.Floor(random.NextDouble() * 100 * v);
+                    int i = (x - n) % v;
+                    if (i < 0)
+                    {
+                        i += v;
+                    }
+                    sd += Convert.ToChar(i);
+                    bw.ReportProgress(1, new ReportStates
+                    {
+                        workerType = WorkerType.ASCII,
+                        total = source.Length,
+                        current = ++j
+                    });
+                }
+                finalResult = se + "\n" + sd;
+                return;
+            }
             try
             {
                 //Count files
                 int filesCount = 0;
-                for (int i = 0; i < importPath.Length; i++)
+                if (importPath != null)
                 {
-                    string filePath = importPath[i];
-                    FileAttributes attr = File.GetAttributes(filePath);
-                    if (attr.HasFlag(FileAttributes.Directory))
+                    for (int i = 0; i < importPath.Length; i++)
                     {
-                        filesCount += Directory.GetFiles(filePath, "*.*", SearchOption.AllDirectories).Length;
+                        string filePath = importPath[i];
+                        try
+                        {
+                            FileAttributes attr = File.GetAttributes(filePath);
+                            if (attr.HasFlag(FileAttributes.Directory))
+                            {
+                                filesCount += Directory.GetFiles(filePath, "*.*", SearchOption.AllDirectories).Length;
+                            }
+                            else
+                            {
+                                filesCount++;
+                            }
+                            bw.ReportProgress(filesCount, new ReportStates { workerType = WorkerType.CountingFiles });
+                        }
+                        catch (Exception) { }
                     }
-                    else
-                    {
-                        filesCount++;
-                    }
-                    bw.ReportProgress(filesCount, new ReportStates { workerType = WorkerType.CountingFiles });
+                    // Encrypt or decrypt the files
+                    HandleData(importPath, e);
                 }
-                // Encrypt or decrypt the files
-                HandleData(importPath, e);
+                else
+                {
+                    // Encrypt or decrypt the files
+                    HandleData(new string[1] { _rtbSourceText }, e);
+                }
             }
             catch (Exception ex)
             {
@@ -552,6 +676,14 @@ namespace DataEncryption
                     pbInfoTotal.Value += progressPercentage;
                     labLayerDecrypted.Text = labLayerDecryptedString + pbInfoTotal.Value;
                     break;
+                case WorkerType.ASCII:
+                    pbInfoSession.Maximum = reportStates.total;
+                    pbInfoSession.Value = reportStates.current;
+                    pbInfoTotal.Value += progressPercentage;
+                    double d1 = ((double)pbInfoTotal.Value / pbInfoTotal.Maximum);
+                    int pec = (int)Math.Floor(d1 * 100);
+                    labDragDropHints.Text = pec + "% finished...";
+                    break;
                 default:
                     break;
             }
@@ -573,7 +705,7 @@ namespace DataEncryption
             {
                 if (finalResult != FileSavedMarker)
                 {
-                    //rtbSource.Text = finalResult;
+                    rtbSource.Text = finalResult;
                 }
             }
             if (workerType == WorkerType.Decryption)
